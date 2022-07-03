@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
-	"github.com/icpp2022hdpsr/reedsolomon"
+	"github.com/YuchongHu/reedsolomon"
 	"golang.org/x/sync/errgroup"
 )
 

@@ -3,7 +3,7 @@ module github.com/icpp22hdpsr/hdpsr
 go 1.17
 
 require (
-	github.com/icpp2022hdpsr/reedsolomon v0.0.1
+	github.com/YuchongHu/reedsolomon v0.0.1
 	github.com/pkg/profile v1.6.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )

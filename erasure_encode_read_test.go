@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/icpp2022hdpsr/reedsolomon"
+	"github.com/YuchongHu/reedsolomon"
 )
 
 //-------------------------TEST UNIT----------------------------

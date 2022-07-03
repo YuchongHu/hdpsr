@@ -1,4 +1,4 @@
-//   @ProjectUrl: github.com/icpp2022hdpsr/hdpsr
+//   @ProjectUrl: github.com/YuchongHu/hdpsr
 
 package main
 
@@ -10,7 +10,7 @@ import (
 	"runtime/pprof"
 	"time"
 
-	hdpsr "github.com/icpp2022hdpsr/hdpsr"
+	hdpsr "github.com/YuchongHu/hdpsr"
 	"github.com/pkg/profile"
 )
 

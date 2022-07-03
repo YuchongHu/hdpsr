@@ -1,6 +1,6 @@
 package hdpsr
 
-import "github.com/icpp2022hdpsr/reedsolomon"
+import "github.com/YuchongHu/reedsolomon"
 
 // Scale expands the storage system to a new k and new m, for example,
 // Start with a (2,1) system but with more data flouring into, the system needs to be scaled to
