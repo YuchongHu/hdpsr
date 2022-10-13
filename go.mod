@@ -1,4 +1,4 @@
-module github.com/icpp22hdpsr/hdpsr
+module github.com/YuchongHu/hdpsr
 
 go 1.17
 
