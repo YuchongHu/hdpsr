@@ -45,7 +45,7 @@ func (e *Erasure) PartialStripeMultiRecoverSlowerFirst(fileName string, slowLate
 	j := e.DiskNum
 	for i := 0; i < e.DiskNum; i++ {
 		if !e.diskInfos[i].available {
-			ReplaceMap[e.diskInfos[i].diskPath] = e.diskInfos[j].diskPath
+			ReplaceMap[e.diskInfos[i].mntPath] = e.diskInfos[j].mntPath
 			replaceMap[i] = j
 			diskFailList[i] = true
 			j++
@@ -59,7 +59,7 @@ func (e *Erasure) PartialStripeMultiRecoverSlowerFirst(fileName string, slowLate
 		i := i
 		disk := disk
 		erg.Go(func() error {
-			folderPath := filepath.Join(disk.diskPath, baseName)
+			folderPath := filepath.Join(disk.mntPath, baseName)
 			blobPath := filepath.Join(folderPath, "BLOB")
 			if !disk.available {
 				ifs[i] = nil
@@ -97,7 +97,7 @@ func (e *Erasure) PartialStripeMultiRecoverSlowerFirst(fileName string, slowLate
 		i := i
 		disk := e.diskInfos[e.DiskNum+i]
 		erg.Go(func() error {
-			folderPath := filepath.Join(disk.diskPath, baseName)
+			folderPath := filepath.Join(disk.mntPath, baseName)
 			blobPath := filepath.Join(folderPath, "BLOB")
 			if e.Override {
 				if err := os.RemoveAll(folderPath); err != nil {
@@ -148,8 +148,8 @@ func (e *Erasure) PartialStripeMultiRecoverSlowerFirst(fileName string, slowLate
 		log.Printf("Start recovering with stripe, totally %d stripes need recovery",
 			stripeNum)
 	}
-	e.ConStripes = (e.MemSize * 1024 * 1024 * 1024) / (intraStripe * int(e.BlockSize))
-	e.ConStripes = min(e.ConStripes, stripeNum)
+	e.ConStripes = (e.MemSize * GiB) / (intraStripe * int(e.BlockSize))
+	e.ConStripes = minInt(e.ConStripes, stripeNum)
 	if e.ConStripes == 0 {
 		return nil, errors.New("memory size is too small")
 	}
@@ -241,32 +241,38 @@ func (e *Erasure) PartialStripeMultiRecoverSlowerFirst(fileName string, slowLate
 				// write the block to backup disk
 				egp := e.errgroupPool.Get().(*errgroup.Group)
 				defer e.errgroupPool.Put(egp)
-				tempId := 0
+				orderMap := make(map[int]int)
+				tmp := 0
+				for j := 0; j < len(invalidIndices); j++ {
+					orderMap[dist[invalidIndices[j]]] = tmp
+					tmp++
+				}
 				for i := 0; i < e.K+e.M; i++ {
-					i := i
 					diskId := dist[i]
 					v := 0
 					ok := false
-					tempId := tempId
 					if v, ok = replaceMap[diskId]; ok {
+						diskId := diskId
 						restoreId := v - e.DiskNum
 						writeOffset := blockToOffset[i]
 						egp.Go(func() error {
-							_, err := rfs[restoreId].WriteAt(tempShard[tempId], int64(writeOffset)*e.BlockSize)
+							restoreId := restoreId
+							writeOffset := writeOffset
+							diskId := diskId
+							tmpId := orderMap[diskId]
+							// fmt.Printf("stripe %d disk %d tmpId: %v\n", spId, diskId, tmpId)
+							_, err := rfs[restoreId].WriteAt(tempShard[tmpId], int64(writeOffset)*e.BlockSize)
 							if err != nil {
 								return err
 							}
 							if e.diskInfos[diskId].ifMetaExist {
-								newMetapath := filepath.Join(e.diskInfos[restoreId].diskPath, "META")
+								newMetapath := filepath.Join(e.diskInfos[restoreId].mntPath, "META")
 								if _, err := copyFile(e.ConfigFile, newMetapath); err != nil {
 									return err
 								}
 							}
 							return nil
 						})
-					}
-					if ok {
-						tempId++
 					}
 				}
 				if err := egp.Wait(); err != nil {
@@ -283,10 +289,10 @@ func (e *Erasure) PartialStripeMultiRecoverSlowerFirst(fileName string, slowLate
 	}
 	// fmt.Println("recover time: ", time.Since(start).Seconds())
 
-	err = e.updateDiskPath(replaceMap)
-	if err != nil {
-		return nil, err
-	}
+	//err = e.updateDiskPath(replaceMap)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	if !e.Quiet {
 		log.Println("Finish recovering")
 	}
